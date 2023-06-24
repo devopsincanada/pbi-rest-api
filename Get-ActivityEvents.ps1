@@ -106,8 +106,7 @@ param(
     [switch]$OutputGrid = $false
 )
 
-# Make all errors terminating
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 
 # Helper function to calculate $StartDateTime, $EndDateTime, and $Date based on $DateOffset
 function Get-DateTimeRange {

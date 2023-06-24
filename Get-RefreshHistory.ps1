@@ -10,15 +10,11 @@ param(
     [Parameter(HelpMessage="Azure AD application secret")]
     [SecureString]$AppSecret = (ConvertTo-SecureString -String ([System.Environment]::GetEnvironmentVariable("PBI_APP_SECRET")) -AsPlainText -Force),
 
-    [Parameter(HelpMessage="Filter to apply to activity events")]
-    [string]$Filter = "",
-
     [Parameter(HelpMessage="Earliest date to include in dataset refresh events")]
-#    [string]$StartDate = "1900-01-01",
-    [string]$StartDate = "2023-06-23",
+    [string]$StartDate = "1900-01-01",
 
     [Parameter(HelpMessage="Latest date to include in dataset refresh events")]
-    [string]$EndDate = "2100-01-01",
+    [string]$EndDate = "2300-01-01",
 
     [Parameter(HelpMessage="Maximum number of datasets to evaluate")]
     [int]$maxDatasets = 500,
@@ -27,7 +23,10 @@ param(
     [int]$maxRefreshes = 500,
 
     [Parameter(HelpMessage="Path to output JSON file")]
-    [string]$OutputJsonPath = "activityevents.json",
+    [string]$OutputJsonPath = "",
+
+    [Parameter(HelpMessage="Path to output CSV file")]
+    [string]$OutputCsvPath = "",
 
     [Parameter(HelpMessage="Output activity events to console")]
     [switch]$OutputConsole = $true,
@@ -110,22 +109,6 @@ function Invoke-PowerBiRestApi {
   }
 }
 
-# TEST VALUES / pbisp with Tenant.ReadWriteAll permissions
-# $TenantId = "45022e30-ae24-477e-9551-367579e9c8ae"
-# $AppId = "d361c100-f3ca-4617-bef4-f88ddea2d8b6"
-# $AppSecret = (ConvertTo-SecureString -String "pCr8Q~HLoSNpCgEHWARxlAD_s3PY6yLjIs4Gubft" -AsPlainText -Force)
-
-# TEST VALUES / pbispdel with specific permissions
-# $TenandId = "45022e30-ae24-477e-9551-367579e9c8ae"
-# $AppId = "f272f2fc-73fc-4929-8b7b-a654b36f4915"
-# $AppSecret = ConvertTo-SecureString "NRD8Q~5NKGVEsRZZxPDz9PhRVg10ggxyibLwRcAV" -AsPlainText -Force
-#$credential = New-Object System.Management.Automation.PSCredential ($clientId, $secret)
-
-# TEST VALUES / pbispapp with no permissions
-$TenandId = "45022e30-ae24-477e-9551-367579e9c8ae"
-$AppId = "4bcb07c1-2a75-4fe2-b1c3-8d48b88a86d9"
-$AppSecret = ConvertTo-SecureString "zPL8Q~nVc6br.NyCkur-2FypOfyc53iX4oFWxcO4" -AsPlainText -Force
-
 # Get the access token
 $AccessToken = ""
 Write-Output ""
@@ -157,7 +140,7 @@ foreach ($dataset in $datasets) {
   try {
     $refreshes = @()
     Write-Output ""
-    Write-Output "Getting refreshes for dataset '$($dataset.name)' between $StartDate and $EndDate"
+    Write-Output "Getting refresh events for dataset '$($dataset.name)' between $StartDate and $EndDate"
     Invoke-PowerBiRestApi `
       -Operation "admin/datasets/$($dataset.id)/refreshes" `
       -Params "`$top=$maxRefreshes" `
@@ -191,45 +174,30 @@ foreach ($dataset in $datasets) {
 
     $RefreshHistory.Value += $subset
   } catch {
-    Write-Output "  *** ERROR *** getting refreshes for dataset '$($dataset.name)'" # : $($_.Exception.Message)"
+    Write-Output "  *** ERROR *** getting refresh events for dataset '$($dataset.name)'" # : $($_.Exception.Message)"
     Write-Output "    $_.ErrorDetails.Message"
     # Write-Error $_.Exception.Message
   }
 }
 
-# $refreshes | ? { $_.startTime -gt "2023-06-21 19:45:49" }
-
-# $i = 1
-
-# $j = 2
-
-
-# try {
-#   $header = @{
-#     "Authorization"="Bearer $($AccessToken)"
-#   }
-#   #$baseUrl = "https://api.powerbi.com/v1.0/myorg/admin/datasets"
-#   $baseUrl = "https://api.powerbi.com/v1.0/myorg/groups"
-#   $params = ""
-#   $field = "value"
-#   $results = @()
-#   $continuationToken = $null
-#   do {
-#       if ($continuationToken) {
-#           $fullUrl = $baseUrl + "?continuationToken='$continuationToken'"
-#       } else {
-#           $fullUrl = $baseUrl + $params
-#       }
-#       Write-Output "Invoking $fullUrl"
-#       $result = Invoke-RestMethod -Method Get -Uri $fullUrl -Headers $header
-#       $results += $result.$field
-#       $continuationToken = $result.continuationToken
-#   } while ($continuationToken)
-# } catch {
-#   Write-Error "Error: $($_.Exception.Message)"
-#   Write-Error $_.ErrorDetails
-#   throw
-# }
-
-
-
+# Output refresh  events
+  if ($RefreshHistory.Value.Count -gt 0) {
+    if (!([string]::IsNullOrEmpty($OutputJsonPath))) {
+        Write-Output "Writing $($RefreshHistory.Value.Count) refresh events to JSON file: $($OutputJsonPath)"
+        $RefreshHistory.Value | ConvertTo-Json -Depth 100 | Out-File -FilePath $OutputJsonPath -Force
+    }
+    if (!([string]::IsNullOrEmpty($OutputCsvPath))) {
+      Write-Output "Writing $($RefreshHistory.Value.Count) refresh events to CSV file: $($OutputCsvPath)"
+      $RefreshHistory.Value | Export-Csv -Path $OutputCsvPath -NoTypeInformation -Force
+    }
+    if ($OutputConsole) {
+        Write-Output "Writing $($RefreshHistory.Value.Count) refresh events to console"
+        $RefreshHistory.Value | Format-List workspaceName, datasetName, startTime, endTime, status, refreshType
+    }
+    if ($OutputGrid) {
+        Write-Output "Writing $($RefreshHistory.Value.Count) refresh events to window grid"
+        $RefreshHistory.Value | Out-GridView
+    }
+} else {
+    Write-Output "No refresh events found."
+}
