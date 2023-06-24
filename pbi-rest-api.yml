@@ -50,10 +50,10 @@ steps:
         -RefreshHistory ([ref]$RefreshHistory)
 
       # Set the output variable for use in the next step
-      Write-Host "##vso[task.setvariable variable=RefreshHistory]$RefreshHistory"
+      Write-Host "##vso[task.setvariable variable=RefreshHistory;isOutput=true]$RefreshHistory"
 
 - task: PublishPipelineArtifact@1
-  condition: gt($(RefreshHistory).Count, 0)
+  condition: gt(variables['GetRefreshHistory.RefreshHistory'].Count, 0)
   inputs:
     targetPath: 'refresh-history.json'
     artifactName: 'refresh-history'
