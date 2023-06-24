@@ -28,9 +28,9 @@ steps:
     pwsh: true
     targetType: inline
     script: |
-      $TenantId = $(TenantId)
-      $AppId = $(AppId)
-      $AppSecret = ConvertTo-SecureString $(AppSecret) -AsPlainText -Force
+      $TenantId = "$(TenantId)"
+      $AppId = "$(AppId)"
+      $AppSecret = ConvertTo-SecureString "$(AppSecret)" -AsPlainText -Force
       $RefreshHistory = @()
       ./Get-RefreshHistory.ps1 `
         -TenantId $TenantId `
