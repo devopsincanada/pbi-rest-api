@@ -53,7 +53,7 @@ steps:
       Write-Host "##vso[task.setvariable variable=RefreshHistory]$RefreshHistory"
 
 - task: PublishPipelineArtifact@1
-  condition: gt(variables.RefreshHistory.Count, 0)
+  condition: gt($(RefreshHistory).Count, 0)
   inputs:
     targetPath: 'refresh-history.json'
     artifactName: 'refresh-history'
