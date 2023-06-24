@@ -45,7 +45,7 @@ steps:
         -OutputGrid:$true `
         -maxDatasets 500 `
         -maxRefreshes 500 `
-        -StartDate "2100-01-01" `
+        -StartDate "1900-01-01" `
         -EndDate "2200-01-01" `
         -RefreshHistory ([ref]$RefreshHistory)
 
