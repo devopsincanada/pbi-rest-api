@@ -1,19 +1,54 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
+# Power BI REST API pipeline.
+# Extracts refresh history for all datasets in all Power BI workspaces
+# and saves to a CSV/JSON file in Azure Blob Storage.
 # https://aka.ms/yaml
 
-trigger:
-- main
+# trigger:
+# - main
+
+# schedules:
+#   - cron: "0 0 * * *"
+#     displayName: Daily midnight (UTC) refresh
+#     branches:
+#       include:
+#         - main
+#     always: true
 
 pool:
   vmImage: ubuntu-latest
 
-steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+variables:
+  # $TenantId, $AppId, $AppSecret are set as pipeline variables
+  - group: pbi-rest-api-variables
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+steps:
+
+- task: PowerShell@2
+  inputs:
+    pwsh: true
+    targetType: inline
+    script: |
+      $TenantId = $(TenantId)
+      $AppId = $(AppId)
+      $AppSecret = ConvertTo-SecureString $(AppSecret) -AsPlainText -Force
+      $RefreshHistory = @()
+      ./Get-RefreshHistory.ps1 `
+        -TenantId $TenantId `
+        -AppId $AppId `
+        -AppSecret $AppSecret `
+        -OutputJsonPath "refresh-history.json" `
+        -OutputCsvPath "refresh-history.csv" `
+        -OutputConsole:$true `
+        -OutputGrid:$true `
+        -maxDatasets 500 `
+        -maxRefreshes 500 `
+        -StartDate "1900-01-01" `
+        -EndDate "2200-01-01" `
+        -RefreshHistory ([ref]$RefreshHistory)
+
+- task: PublishPipelineArtifact@1
+  inputs:
+    targetPath: 'refresh-history.json'
+    artifactName: 'refresh-history'
+    publishLocation: 'pipeline'
+    
