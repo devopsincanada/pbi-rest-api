@@ -3,16 +3,16 @@
 # and saves to a CSV/JSON file in Azure Blob Storage.
 # https://aka.ms/yaml
 
-# trigger:
-# - main
+trigger:
+- main
 
-# schedules:
-#   - cron: "0 0 * * *"
-#     displayName: Daily midnight (UTC) refresh
-#     branches:
-#       include:
-#         - main
-#     always: true
+schedules:
+- cron: "0 0 * * *"
+  displayName: Daily midnight (UTC) refresh
+  branches:
+    include:
+      - main
+  always: true
 
 pool:
   vmImage: ubuntu-latest
@@ -24,6 +24,8 @@ variables:
 steps:
 
 - task: PowerShell@2
+  displayName: 'Get refresh history'
+  name: GetRefreshHistory
   inputs:
     pwsh: true
     targetType: inline
@@ -31,6 +33,7 @@ steps:
       $TenantId = "$(TenantId)"
       $AppId = "$(AppId)"
       $AppSecret = ConvertTo-SecureString "$(AppSecret)" -AsPlainText -Force
+
       $RefreshHistory = @()
       ./Get-RefreshHistory.ps1 `
         -TenantId $TenantId `
@@ -42,11 +45,15 @@ steps:
         -OutputGrid:$true `
         -maxDatasets 500 `
         -maxRefreshes 500 `
-        -StartDate "1900-01-01" `
+        -StartDate "2100-01-01" `
         -EndDate "2200-01-01" `
         -RefreshHistory ([ref]$RefreshHistory)
 
+      # Set the output variable for use in the next step
+      Write-Host "##vso[task.setvariable variable=RefreshHistory;isOutput=true]$RefreshHistory"
+
 - task: PublishPipelineArtifact@1
+  condition: $(GetRefreshHistory.outputs['GetRefreshHistory.RefreshHistory']).Count -gt 0
   inputs:
     targetPath: 'refresh-history.json'
     artifactName: 'refresh-history'
