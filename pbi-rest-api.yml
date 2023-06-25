@@ -53,10 +53,11 @@ jobs:
 
         # Set the output variable 'RefreshHistory' for use in the next job
         Write-Host "##vso[task.setvariable variable=RefreshHistory;isOutput=true]$RefreshHistory"
+        Write-Host "##vso[task.setvariable variable=RefreshHistoryCount;isOutput=true]$RefreshHistory.Count"
 
 - job: PublishRefreshHistoryJob
   dependsOn: GetRefreshHistoryJob
-  condition: gt(dependencies.GetRefreshHistoryJob.outputs['GetRefreshHistoryStep.RefreshHistory'].Count, 0)
+  condition: gt(dependencies.GetRefreshHistoryJob.outputs['GetRefreshHistoryStep.RefreshHistoryCount'], 0)
   steps:        
   - task: PublishPipelineArtifact@1
     displayName: 'Publish Refresh History to Azure Pipelines'
