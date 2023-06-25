@@ -76,6 +76,9 @@ jobs:
       targetType: inline
       script: |
         $RefreshHistory = $(RefreshHistory)
+        Write-Output "==================================================="
+        Write-Output "Refresh History: $RefreshHistory"
+        Write-Output ""
         foreach ($refresh in $RefreshHistory) {
           Write-Output "==================================================="
           Write-Output "$($refresh.workspaceName)"
