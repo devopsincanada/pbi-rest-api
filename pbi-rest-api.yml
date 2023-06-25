@@ -103,7 +103,7 @@ stages:
           Write-Host "##vso[task.setvariable variable=RefreshCount;isOutput=true]$($RefreshHistory.Count)"
 
     - task: PublishPipelineArtifact@1
-      condition: and(succeeded(), and(gt(variables.RefreshCount, 0), ne(parameters.OutputJsonPath,'')))
+      condition: and(succeeded(), and(gt(variables.RefreshCount, 0), ne('${{ parameters.OutputJsonPath }}','')))
       displayName: 'Publish JSON Refresh History to Azure Pipelines'
       name: PublishJsonRefreshHistory
       inputs:
@@ -112,7 +112,7 @@ stages:
         publishLocation: 'pipeline'
 
     - task: PublishPipelineArtifact@1
-      condition: and(succeeded(), and(gt(variables.RefreshCount, 0), ne(parameters.OutputCsvPath,'')))
+      condition: and(succeeded(), and(gt(variables.RefreshCount, 0), ne('${{ parameters.OutputCsvPath }}','')))
       displayName: 'Publish CSV Refresh History to Azure Pipelines'
       name: PublishCsvRefreshHistory
       inputs:
