@@ -126,9 +126,10 @@ stages:
 
   - job: PublishRefreshHistoryJob
     dependsOn: GetRefreshHistoryJob
-    variables:
-      RefreshCount: $[dependencies.GetRefreshHistoryJob.outputs['GetRefreshHistoryStep.RefresCount']]
-    condition: gt(variables.RefreshCount, 0)
+    # variables:
+    #   RefreshCount: $[dependencies.GetRefreshHistoryJob.outputs['GetRefreshHistoryStep.RefresCount']]
+    # condition: gt(variables.RefreshCount, 0)
+    condition: gt(dependencies.GetRefreshHistoryJob.outputs['GetRefreshHistoryStep.RefresCount'], 0)
     steps:
     - task: DownloadPipelineArtifact@2
       displayName: 'Download Refresh History'
