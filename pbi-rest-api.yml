@@ -132,7 +132,7 @@ stages:
     # variables:
     #   RefreshCount: $[dependencies.GetRefreshHistoryJob.outputs['GetRefreshHistoryStep.RefresCount']]
     # condition: gt(variables.RefreshCount, 0)
-    condition: eq(dependencies.GetRefreshHistoryJob.outputs['GetRefreshHistoryStep.JobRefresCount'], '0')
+    condition: eq(dependencies.GetRefreshHistoryJob.outputs['GetRefreshHistoryStep.JobRefreshCount'], 0)
     steps:
     - task: DownloadPipelineArtifact@2
       displayName: 'Download Refresh History'
