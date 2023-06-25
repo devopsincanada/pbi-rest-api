@@ -114,6 +114,9 @@ stages:
     #     targetPath: ${{ parameters.OutputCsvPath }}
     #     artifactName: 'refresh-history'
     #     publishLocation: 'pipeline'
+
+    - pwsh: |
+        Write-Output "$(RefreshCount)"
   
     - task: PublishPipelineArtifact@1
       condition: and(succeeded(), and(gt(variables.RefreshCount, 0), or(ne('${{ parameters.OutputJsonPath }}',''), ne('${{ parameters.OutputCsvPath }}',''))))
