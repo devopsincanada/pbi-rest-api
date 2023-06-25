@@ -44,7 +44,6 @@ jobs:
           -OutputJsonPath "refresh-history.json" `
           -OutputCsvPath "refresh-history.csv" `
           -OutputConsole:$true `
-          -OutputGrid:$true `
           -maxDatasets 500 `
           -maxRefreshes 500 `
           -StartDate "1900-01-01" `
