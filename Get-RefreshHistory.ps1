@@ -59,8 +59,8 @@ function Get-AccessToken {
     $oauth = Invoke-RestMethod -Method Post -Uri $loginUrl -Body $body
     $AccessToken.Value = $oauth.access_token
   } catch {
-    Write-Error "Error getting authentication token: $($_.Exception.Message)"
-    Write-Error $_.ErrorDetails
+    Write-Output "  *** ERROR *** Getting authentication token"
+    Write-Output "    $_.ErrorDetails.Message"
     throw
   }
 }
