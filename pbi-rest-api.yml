@@ -66,11 +66,11 @@ jobs:
   #     artifactName: 'refresh-history'
   #     publishLocation: 'pipeline'
   - task: PowerShell@2
-    displayName: 'Get Refresh History'
-    name: GetRefreshHistoryStep
+    displayName: 'Publish Refresh History'
+    name: PublishRefreshHistoryStep
     inputs:
       pwsh: true
       targetType: inline
       script: |
-        $RefreshHistory = "$(GetRefreshHistoryJob.RefreshHistory)"
+        $RefreshHistory = $(GetRefreshHistoryJob.RefreshHistory)
         $RefreshHistory | fl
