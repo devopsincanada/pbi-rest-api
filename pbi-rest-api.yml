@@ -77,6 +77,7 @@ jobs:
       script: |
         $RefreshHistory = $(RefreshHistory)
         Write-Output "==================================================="
+        Write-Output "Refresh History Count: $($RefreshHistory.Count)"
         Write-Output "Refresh History: $RefreshHistory"
         Write-Output ""
         foreach ($refresh in $RefreshHistory) {
