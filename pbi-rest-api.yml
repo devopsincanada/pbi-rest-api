@@ -46,7 +46,7 @@ jobs:
           -OutputConsole:$true `
           -maxDatasets 500 `
           -maxRefreshes 500 `
-          -StartDate "2100-01-01" `
+          -StartDate "1900-01-01" `
           -EndDate "2200-01-01" `
           -RefreshHistory ([ref]$RefreshHistory)
 
@@ -57,12 +57,20 @@ jobs:
 - job: PublishRefreshHistoryJob
   dependsOn: GetRefreshHistoryJob
   condition: gt(dependencies.GetRefreshHistoryJob.outputs['GetRefreshHistoryStep.RefreshHistoryCount'], 0)
-  steps:        
-  - task: PublishPipelineArtifact@1
-    displayName: 'Publish Refresh History to Azure Pipelines'
-    name: PublishRefreshHistory
+  steps:
+  # - task: PublishPipelineArtifact@1
+  #   displayName: 'Publish Refresh History to Azure Pipelines'
+  #   name: PublishRefreshHistory
+  #   inputs:
+  #     targetPath: 'refresh-history.json'
+  #     artifactName: 'refresh-history'
+  #     publishLocation: 'pipeline'
+  - task: PowerShell@2
+    displayName: 'Get Refresh History'
+    name: GetRefreshHistoryStep
     inputs:
-      targetPath: 'refresh-history.json'
-      artifactName: 'refresh-history'
-      publishLocation: 'pipeline'
-    
+      pwsh: true
+      targetType: inline
+      script: |
+        $RefreshHistory = "$(GetRefreshHistoryJob.RefreshHistory)"
+        $RefreshHistory | fl
