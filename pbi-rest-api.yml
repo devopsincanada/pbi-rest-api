@@ -21,10 +21,6 @@ parameters:
     type: string
     displayName: Output CSV Path
     default: 'refresh-history.csv'
-  - name: OutputConsole
-    type: boolean
-    displayName: Output to Console (true/false)
-    default: true
   - name: MaxDatasets
     type: number
     displayName: Max Datasets
@@ -89,7 +85,6 @@ stages:
             -AppSecret $AppSecret `
             -OutputJsonPath ${{ parameters.OutputJsonPath }} `
             -OutputCsvPath ${{ parameters.OutputCsvPath }} `
-            -OutputConsole:`$${{ parameters.OutputConsole }} `
             -MaxDatasets ${{ parameters.MaxDatasets }} `
             -MaxRefreshes ${{ parameters.MaxRefreshes }} `
             -StartDate ${{ parameters.StartDate }} `
