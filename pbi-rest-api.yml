@@ -89,7 +89,7 @@ stages:
             -AppSecret $AppSecret `
             -OutputJsonPath ${{ parameters.OutputJsonPath }} `
             -OutputCsvPath ${{ parameters.OutputCsvPath }} `
-            -OutputConsole:${{ parameters.OutputConsole }} `
+            -OutputConsole:`$${{ parameters.OutputConsole }} `
             -MaxDatasets ${{ parameters.MaxDatasets }} `
             -MaxRefreshes ${{ parameters.MaxRefreshes }} `
             -StartDate ${{ parameters.StartDate }} `
