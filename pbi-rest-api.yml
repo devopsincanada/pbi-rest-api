@@ -72,5 +72,5 @@ jobs:
       pwsh: true
       targetType: inline
       script: |
-        $RefreshHistory = $(GetRefreshHistoryJob.RefreshHistory)
+        $RefreshHistory = $(GetRefreshHistoryStep.RefreshHistory)
         $RefreshHistory | fl
