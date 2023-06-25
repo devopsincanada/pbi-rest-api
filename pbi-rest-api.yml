@@ -3,6 +3,45 @@
 # and saves to a CSV/JSON file in Azure Blob Storage.
 # https://aka.ms/yaml
 
+# All parameters have default values and can be overridden in the pipeline
+parameters:
+  - name: vmImage
+    type: string
+    displayName: VM Image
+    default: 'ubuntu-latest'
+    values:
+      - 'ubuntu-latest'
+      - 'windows-latest'
+      - 'macOS-latest'
+  - name: OutputJsonPath
+    type: string
+    displayName: Output JSON Path
+    default: 'refresh-history.json'
+  - name: OutputCsvPath
+    type: string
+    displayName: Output CSV Path
+    default: 'refresh-history.csv'
+  - name: OutputConsole
+    type: boolean
+    displayName: Output to Console (true/false)
+    default: true
+  - name: MaxDatasets
+    type: number
+    displayName: Max Datasets
+    default: 500
+  - name: MaxRefreshes
+    type: number
+    displayName: Max Refreshes
+    default: 500
+  - name: StartDate
+    type: string
+    displayName: Start Date
+    default: '1900-01-01'
+  - name: EndDate
+    type: string
+    displayName: End Date
+    default: '2200-01-01'
+
 trigger:
 - main
 
@@ -15,10 +54,10 @@ schedules:
   always: true
 
 pool:
-  vmImage: ubuntu-latest
+  vmImage: ${{ parameters.vmImage }}
 
 variables:
-  # $TenantId, $AppId, $AppSecret are set as pipeline variables
+  # $TenantId, $AppId, $AppSecret are set as Variable Group in Azure Pipelines
   - group: pbi-rest-api-variables
 
 jobs:
@@ -41,51 +80,83 @@ jobs:
           -TenantId $TenantId `
           -AppId $AppId `
           -AppSecret $AppSecret `
-          -OutputJsonPath "refresh-history.json" `
-          -OutputCsvPath "refresh-history.csv" `
-          -OutputConsole:$true `
-          -maxDatasets 500 `
-          -maxRefreshes 500 `
-          -StartDate "1900-01-01" `
-          -EndDate "2200-01-01" `
+          -OutputJsonPath ${{ parameters.OutputJsonPath }} `
+          -OutputCsvPath ${{ parameters.OutputCsvPath }} `
+          -OutputConsole:${{ parameters.OutputConsole }} `
+          -MaxDatasets ${{ parameters.MaxDatasets }} `
+          -MaxRefreshes ${{ parameters.MaxRefreshes }} `
+          -StartDate ${{ parameters.StartDate }} `
+          -EndDate ${{ parameters.EndDate }} `
           -RefreshHistory ([ref]$RefreshHistory)
 
-        # Set the output variable 'RefreshHistory' for use in the next job
-        Write-Host "##vso[task.setvariable variable=RefreshHistory;isOutput=true]$RefreshHistory"
-        Write-Host "##vso[task.setvariable variable=RefreshHistoryCount;isOutput=true]$($RefreshHistory.Count)"
+        # Refresh count for tasks within this job
+        Write-Host "##vso[task.setvariable variable=RefreshCount]$($RefreshHistory.Count)"
+
+        # Refresh count for tasks in other jobs
+        Write-Host "##vso[task.setvariable variable=RefreshCount;isOutput=true]$($RefreshHistory.Count)"
+
+  - task: PublishPipelineArtifact@1
+    condition: and(succeeded(), and(gt(variables.RefreshCount, 0), ne(parameters.OutputJsonPath,''))
+    displayName: 'Publish JSON Refresh History to Azure Pipelines'
+    name: PublishJsonRefreshHistory
+    inputs:
+      targetPath: ${{ parameters.OutputJsonPath }}
+      artifactName: 'refresh-history'
+      publishLocation: 'pipeline'
+
+  - task: PublishPipelineArtifact@1
+    condition: and(succeeded(), and(gt(variables.RefreshCount, 0), ne(parameters.OutputCsvPath,''))
+    displayName: 'Publish CSV Refresh History to Azure Pipelines'
+    name: PublishCsvRefreshHistory
+    inputs:
+      targetPath: ${{ parameters.OutputCsvPath }}
+      artifactName: 'refresh-history'
+      publishLocation: 'pipeline'
 
 - job: PublishRefreshHistoryJob
   dependsOn: GetRefreshHistoryJob
   variables:
-    RefreshHistory: $[dependencies.GetRefreshHistoryJob.outputs['GetRefreshHistoryStep.RefreshHistory']]
-    RefreshHistoryCount: $[dependencies.GetRefreshHistoryJob.outputs['GetRefreshHistoryStep.RefreshHistoryCount']]
-  condition: gt(dependencies.GetRefreshHistoryJob.outputs['GetRefreshHistoryStep.RefreshHistoryCount'], 0)
+    RefreshCount: $[dependencies.GetRefreshHistoryJob.outputs['GetRefreshHistoryStep.RefresCount']]
+  condition: gt(variables.RefreshCount, 0)
   steps:
-  # - task: PublishPipelineArtifact@1
-  #   displayName: 'Publish Refresh History to Azure Pipelines'
-  #   name: PublishRefreshHistory
-  #   inputs:
-  #     targetPath: 'refresh-history.json'
-  #     artifactName: 'refresh-history'
-  #     publishLocation: 'pipeline'
-  - task: PowerShell@2
-    displayName: 'Publish Refresh History'
-    name: PublishRefreshHistoryStep
+  - task: DownloadPipelineArtifact@2
+    displayName: 'Download Refresh History'
+    name: DownloadRefreshHistory
     inputs:
-      pwsh: true
-      targetType: inline
-      script: |
-        $RefreshHistory = $(RefreshHistory)
-        Write-Output "==================================================="
-        Write-Output "Refresh History Count: $($RefreshHistory.Count)"
-        Write-Output "Refresh History: $RefreshHistory"
-        Write-Output ""
-        foreach ($refresh in $RefreshHistory) {
-          Write-Output "==================================================="
-          Write-Output "$($refresh.workspaceName)"
-          Write-Output "$($refresh.datasetName)"
-          Write-Output "$($refresh.startTime)"
-          Write-Output "$($refresh.endTime)"
-          Write-Output "$($refresh.status)"
-          Write-Output ""
-        }
+      artifactName: 'refresh-history'
+      targetPath: '$(Pipeline.Workspace)'
+
+  # - task: AzureFileCopy@5
+  #   displayName: 'Copy Refresh History to Azure Blob Storage'
+  #   name: CopyRefreshHistory
+  #   inputs:
+  #     SourcePath: '$(Pipeline.Workspace)'
+  #     azureSubscription: 'Power BI REST API'
+  #     Destination: AzureBlob
+  #     storage: 'pbi-rest-api'
+  #     ContainerName: 'refresh-history'
+  #     BlobPrefix: 'refresh-history'
+  #     outputStorageUri: 'RefreshHistoryBlobUri'
+  #     outputStorageContainerSasToken: 'RefreshHistoryBlobSasToken'
+
+  # - task: PowerShell@2
+  #   displayName: 'Publish Refresh History'
+  #   name: PublishRefreshHistoryStep
+  #   inputs:
+  #     pwsh: true
+  #     targetType: inline
+  #     script: |
+  #       $RefreshHistory = $(RefreshHistory)
+  #       Write-Output "==================================================="
+  #       Write-Output "Refresh History Count: $($RefreshHistory.Count)"
+  #       Write-Output "Refresh History: $RefreshHistory"
+  #       Write-Output ""
+  #       foreach ($refresh in $RefreshHistory) {
+  #         Write-Output "==================================================="
+  #         Write-Output "$($refresh.workspaceName)"
+  #         Write-Output "$($refresh.datasetName)"
+  #         Write-Output "$($refresh.startTime)"
+  #         Write-Output "$($refresh.endTime)"
+  #         Write-Output "$($refresh.status)"
+  #         Write-Output ""
+  #       }
