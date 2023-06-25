@@ -53,7 +53,7 @@ jobs:
 
         # Set the output variable 'RefreshHistory' for use in the next job
         Write-Host "##vso[task.setvariable variable=RefreshHistory;isOutput=true]$RefreshHistory"
-        Write-Host "##vso[task.setvariable variable=RefreshHistoryCount;isOutput=true]$RefreshHistory.Count"
+        Write-Host "##vso[task.setvariable variable=RefreshHistoryCount;isOutput=true]$($RefreshHistory.Count)"
 
 - job: PublishRefreshHistoryJob
   dependsOn: GetRefreshHistoryJob
