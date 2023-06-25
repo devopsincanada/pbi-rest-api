@@ -56,6 +56,9 @@ jobs:
 
 - job: PublishRefreshHistoryJob
   dependsOn: GetRefreshHistoryJob
+  variables:
+    RefreshHistory: $[dependencies.GetRefreshHistoryJob.outputs['GetRefreshHistoryStep.RefreshHistory']]
+    RefreshHistoryCount: $[dependencies.GetRefreshHistoryJob.outputs['GetRefreshHistoryStep.RefreshHistoryCount']]
   condition: gt(dependencies.GetRefreshHistoryJob.outputs['GetRefreshHistoryStep.RefreshHistoryCount'], 0)
   steps:
   # - task: PublishPipelineArtifact@1
@@ -72,5 +75,4 @@ jobs:
       pwsh: true
       targetType: inline
       script: |
-        $RefreshHistory = $(GetRefreshHistoryStep.RefreshHistory)
-        $RefreshHistory | fl
+        $(RefreshHistory) | fl
