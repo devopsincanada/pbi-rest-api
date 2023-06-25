@@ -53,78 +53,85 @@ schedules:
       - main
   always: true
 
-pool:
-  vmImage: $[ parameters.vmImage ]
+# pool:
+#   vmImage: $[ parameters.vmImage ]
 
 variables:
   # $TenantId, $AppId, $AppSecret are set as Variable Group in Azure Pipelines
   - group: pbi-rest-api-variables
 
-jobs:
+stages:
 
-- job: GetRefreshHistoryJob
-  steps:
-  - task: PowerShell@2
-    displayName: 'Get Refresh History'
-    name: GetRefreshHistoryStep
-    inputs:
-      pwsh: true
-      targetType: inline
-      script: |
-        $TenantId = "$(TenantId)"
-        $AppId = "$(AppId)"
-        $AppSecret = ConvertTo-SecureString "$(AppSecret)" -AsPlainText -Force
+- stage: GetRefreshHistoryStage
+  displayName: Get Refresh History Stage
+  pool:
+    vmImage: $[ parameters.vmImage ]
+  
+  jobs:
 
-        $RefreshHistory = @()
-        ./Get-RefreshHistory.ps1 `
-          -TenantId $TenantId `
-          -AppId $AppId `
-          -AppSecret $AppSecret `
-          -OutputJsonPath ${{ parameters.OutputJsonPath }} `
-          -OutputCsvPath ${{ parameters.OutputCsvPath }} `
-          -OutputConsole:${{ parameters.OutputConsole }} `
-          -MaxDatasets ${{ parameters.MaxDatasets }} `
-          -MaxRefreshes ${{ parameters.MaxRefreshes }} `
-          -StartDate ${{ parameters.StartDate }} `
-          -EndDate ${{ parameters.EndDate }} `
-          -RefreshHistory ([ref]$RefreshHistory)
+  - job: GetRefreshHistoryJob
+    steps:
+    - task: PowerShell@2
+      displayName: 'Get Refresh History'
+      name: GetRefreshHistoryStep
+      inputs:
+        pwsh: true
+        targetType: inline
+        script: |
+          $TenantId = "$(TenantId)"
+          $AppId = "$(AppId)"
+          $AppSecret = ConvertTo-SecureString "$(AppSecret)" -AsPlainText -Force
 
-        # Refresh count for tasks within this job
-        Write-Host "##vso[task.setvariable variable=RefreshCount]$($RefreshHistory.Count)"
+          $RefreshHistory = @()
+          ./Get-RefreshHistory.ps1 `
+            -TenantId $TenantId `
+            -AppId $AppId `
+            -AppSecret $AppSecret `
+            -OutputJsonPath ${{ parameters.OutputJsonPath }} `
+            -OutputCsvPath ${{ parameters.OutputCsvPath }} `
+            -OutputConsole:${{ parameters.OutputConsole }} `
+            -MaxDatasets ${{ parameters.MaxDatasets }} `
+            -MaxRefreshes ${{ parameters.MaxRefreshes }} `
+            -StartDate ${{ parameters.StartDate }} `
+            -EndDate ${{ parameters.EndDate }} `
+            -RefreshHistory ([ref]$RefreshHistory)
 
-        # Refresh count for tasks in other jobs
-        Write-Host "##vso[task.setvariable variable=RefreshCount;isOutput=true]$($RefreshHistory.Count)"
+          # Refresh count for tasks within this job
+          Write-Host "##vso[task.setvariable variable=RefreshCount]$($RefreshHistory.Count)"
 
-  - task: PublishPipelineArtifact@1
-    condition: and(succeeded(), and(gt(variables.RefreshCount, 0), ne(parameters.OutputJsonPath,'')))
-    displayName: 'Publish JSON Refresh History to Azure Pipelines'
-    name: PublishJsonRefreshHistory
-    inputs:
-      targetPath: ${{ parameters.OutputJsonPath }}
-      artifactName: 'refresh-history'
-      publishLocation: 'pipeline'
+          # Refresh count for tasks in other jobs
+          Write-Host "##vso[task.setvariable variable=RefreshCount;isOutput=true]$($RefreshHistory.Count)"
 
-  - task: PublishPipelineArtifact@1
-    condition: and(succeeded(), and(gt(variables.RefreshCount, 0), ne(parameters.OutputCsvPath,'')))
-    displayName: 'Publish CSV Refresh History to Azure Pipelines'
-    name: PublishCsvRefreshHistory
-    inputs:
-      targetPath: ${{ parameters.OutputCsvPath }}
-      artifactName: 'refresh-history'
-      publishLocation: 'pipeline'
+    - task: PublishPipelineArtifact@1
+      condition: and(succeeded(), and(gt(variables.RefreshCount, 0), ne(parameters.OutputJsonPath,'')))
+      displayName: 'Publish JSON Refresh History to Azure Pipelines'
+      name: PublishJsonRefreshHistory
+      inputs:
+        targetPath: ${{ parameters.OutputJsonPath }}
+        artifactName: 'refresh-history'
+        publishLocation: 'pipeline'
 
-- job: PublishRefreshHistoryJob
-  dependsOn: GetRefreshHistoryJob
-  variables:
-    RefreshCount: $[dependencies.GetRefreshHistoryJob.outputs['GetRefreshHistoryStep.RefresCount']]
-  condition: gt(variables.RefreshCount, 0)
-  steps:
-  - task: DownloadPipelineArtifact@2
-    displayName: 'Download Refresh History'
-    name: DownloadRefreshHistory
-    inputs:
-      artifactName: 'refresh-history'
-      targetPath: '$(Pipeline.Workspace)'
+    - task: PublishPipelineArtifact@1
+      condition: and(succeeded(), and(gt(variables.RefreshCount, 0), ne(parameters.OutputCsvPath,'')))
+      displayName: 'Publish CSV Refresh History to Azure Pipelines'
+      name: PublishCsvRefreshHistory
+      inputs:
+        targetPath: ${{ parameters.OutputCsvPath }}
+        artifactName: 'refresh-history'
+        publishLocation: 'pipeline'
+
+  - job: PublishRefreshHistoryJob
+    dependsOn: GetRefreshHistoryJob
+    variables:
+      RefreshCount: $[dependencies.GetRefreshHistoryJob.outputs['GetRefreshHistoryStep.RefresCount']]
+    condition: gt(variables.RefreshCount, 0)
+    steps:
+    - task: DownloadPipelineArtifact@2
+      displayName: 'Download Refresh History'
+      name: DownloadRefreshHistory
+      inputs:
+        artifactName: 'refresh-history'
+        targetPath: '$(Pipeline.Workspace)'
 
   # - task: AzureFileCopy@5
   #   displayName: 'Copy Refresh History to Azure Blob Storage'
