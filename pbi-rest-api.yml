@@ -54,7 +54,7 @@ schedules:
   always: true
 
 pool:
-  vmImage: ${{ parameters.vmImage }}
+  vmImage: $[ parameters.vmImage ]
 
 variables:
   # $TenantId, $AppId, $AppSecret are set as Variable Group in Azure Pipelines
