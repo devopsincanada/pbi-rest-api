@@ -75,4 +75,13 @@ jobs:
       pwsh: true
       targetType: inline
       script: |
-        $(RefreshHistory) | fl
+        $RefreshHistory = $(RefreshHistory)
+        foreach ($refresh in $RefreshHistory) {
+          Write-Output "==================================================="
+          Write-Output "$($refresh.workspaceName)"
+          Write-Output "$($refresh.datasetName)"
+          Write-Output "$($refresh.startTime)"
+          Write-Output "$($refresh.endTime)"
+          Write-Output "$($refresh.status)"
+          Write-Output ""
+        }
