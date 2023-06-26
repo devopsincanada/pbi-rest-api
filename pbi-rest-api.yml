@@ -97,17 +97,6 @@ stages:
           # Refresh count for tasks in other jobs
           Write-Host "##vso[task.setvariable variable=JobRefreshCount;isOutput=true]$($RefreshHistory.Count)"
 
-          Get-ChildItem -Path .
-
-    # - task: PublishPipelineArtifact@1
-    #   condition: and(succeeded(), and(gt(variables.RefreshCount, 0), or(ne('${{ parameters.OutputJsonPath }}',''), ne('${{ parameters.OutputCsvPath }}',''))))
-    #   displayName: 'Publish pipeline workspace to Azure Pipelines artifact'
-    #   name: PublishRefreshHistory
-    #   inputs:
-    #     artifactName: 'refresh-history'
-    #     targetPath: $(System.DefaultWorkingDirectory)
-    #     publishLocation: 'pipeline'
-
     - publish: $(System.DefaultWorkingDirectory)
       condition: and(succeeded(), and(gt(variables.RefreshCount, 0), or(ne('${{ parameters.OutputJsonPath }}',''), ne('${{ parameters.OutputCsvPath }}',''))))
       artifact: refresh-history
@@ -117,18 +106,6 @@ stages:
     condition: gt(dependencies.GetRefreshHistoryJob.outputs['GetRefreshHistoryStep.JobRefreshCount'], 0)
 
     steps:
-
-    # - task: DownloadPipelineArtifact@2
-    #   displayName: 'Download Refresh History'
-    #   name: DownloadRefreshHistory
-    #   inputs:
-    #     buildType: 'current'
-    #     artifactName: 'refresh-history'
-    #     targetPath: '$(System.DefaultWorkingDirectory)'
-    #     itemPattern: |
-    #       **/*.json
-    #       **/*.csv
-    #     # itemPattern: '**/*.(json|csv)'
 
     - download: current
       artifact: refresh-history
