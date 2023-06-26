@@ -72,6 +72,7 @@ stages:
       inputs:
         pwsh: true
         targetType: inline
+        workingDirectory: '$(System.DefaultWorkingDirectory)'
         script: |
           $TenantId = "$(TenantId)"
           $AppId = "$(AppId)"
@@ -95,6 +96,8 @@ stages:
 
           # Refresh count for tasks in other jobs
           Write-Host "##vso[task.setvariable variable=JobRefreshCount;isOutput=true]$($RefreshHistory.Count)"
+
+          Get-ChildItem -Path .
 
     - task: PublishPipelineArtifact@1
       condition: and(succeeded(), and(gt(variables.RefreshCount, 0), or(ne('${{ parameters.OutputJsonPath }}',''), ne('${{ parameters.OutputCsvPath }}',''))))
