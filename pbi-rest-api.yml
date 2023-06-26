@@ -113,27 +113,6 @@ stages:
         **/*.json
         **/*.csv
 
-    # - task: PowerShell@2
-    #   inputs:
-    #     workingDirectory: '$(System.DefaultWorkingDirectory)'
-    #     pwsh: true
-    #     targetType: inline
-    #     script: |
-    #       Get-ChildItem -Recurse -Path '$(Pipeline.Workspace)/refresh-history/*' -Include '*.json', '*.csv' -Name
-
-    # - task: AzureCLI@2
-    #   condition: and(succeeded(), ne('${{ parameters.OutputJsonPath }}',''))
-    #   displayName: 'Copy JSON to Azure Blob Storage'
-    #   inputs:
-    #     azureSubscription: $(ServiceConnection)
-    #     workingDirectory: '$(Pipeline.Workspace)/refresh-history'
-    #     scriptType: pscore
-    #     scriptLocation: inlineScript
-    #     inlineScript: |
-    #       $StorageAccountName = 'pbi-rest-api'
-    #       $StorageAccountKey = az storage account keys list --account-name $StorageAccountName --query '[0].value' -o tsv
-    #       Write-Host "##vso[task.setvariable variable=StorageAccountKey]$StorageAccountKey"
-
     - task: AzureFileCopy@5
       condition: and(succeeded(), ne('${{ parameters.OutputJsonPath }}',''))
       displayName: 'Copy JSON Refresh History to Azure Blob Storage'
@@ -158,38 +137,3 @@ stages:
         ContainerName: $(StorageContainer)
         BlobPrefix: ''
   
-
-  # - task: AzureFileCopy@5
-  #   displayName: 'Copy Refresh History to Azure Blob Storage'
-  #   name: CopyRefreshHistory
-  #   inputs:
-  #     SourcePath: '$(Pipeline.Workspace)'
-  #     azureSubscription: 'Power BI REST API'
-  #     Destination: AzureBlob
-  #     storage: 'pbi-rest-api'
-  #     ContainerName: 'refresh-history'
-  #     BlobPrefix: 'refresh-history'
-  #     outputStorageUri: 'RefreshHistoryBlobUri'
-  #     outputStorageContainerSasToken: 'RefreshHistoryBlobSasToken'
-
-  # - task: PowerShell@2
-  #   displayName: 'Publish Refresh History'
-  #   name: PublishRefreshHistoryStep
-  #   inputs:
-  #     pwsh: true
-  #     targetType: inline
-  #     script: |
-  #       $RefreshHistory = $(RefreshHistory)
-  #       Write-Output "==================================================="
-  #       Write-Output "Refresh History Count: $($RefreshHistory.Count)"
-  #       Write-Output "Refresh History: $RefreshHistory"
-  #       Write-Output ""
-  #       foreach ($refresh in $RefreshHistory) {
-  #         Write-Output "==================================================="
-  #         Write-Output "$($refresh.workspaceName)"
-  #         Write-Output "$($refresh.datasetName)"
-  #         Write-Output "$($refresh.startTime)"
-  #         Write-Output "$($refresh.endTime)"
-  #         Write-Output "$($refresh.status)"
-  #         Write-Output ""
-  #       }
