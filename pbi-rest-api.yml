@@ -8,7 +8,7 @@ parameters:
   - name: vmImage
     type: string
     displayName: VM Image
-    default: 'ubuntu-latest'
+    default: 'windows-latest'
     values:
       - 'ubuntu-latest'
       - 'windows-latest'
@@ -50,7 +50,7 @@ schedules:
   always: true
 
 variables:
-  # $TenantId, $AppId, $AppSecret are set as Variable Group in Azure Pipelines
+  # $TenantId, $AppId, $AppSecret, $ServiceConnection, $StorageAccount, $StorageContainer
   - group: pbi-rest-api-variables
 
 stages:
@@ -113,13 +113,51 @@ stages:
         **/*.json
         **/*.csv
 
-    - task: PowerShell@2
+    # - task: PowerShell@2
+    #   inputs:
+    #     workingDirectory: '$(System.DefaultWorkingDirectory)'
+    #     pwsh: true
+    #     targetType: inline
+    #     script: |
+    #       Get-ChildItem -Recurse -Path '$(Pipeline.Workspace)/refresh-history/*' -Include '*.json', '*.csv' -Name
+
+    # - task: AzureCLI@2
+    #   condition: and(succeeded(), ne('${{ parameters.OutputJsonPath }}',''))
+    #   displayName: 'Copy JSON to Azure Blob Storage'
+    #   inputs:
+    #     azureSubscription: $(ServiceConnection)
+    #     workingDirectory: '$(Pipeline.Workspace)/refresh-history'
+    #     scriptType: pscore
+    #     scriptLocation: inlineScript
+    #     inlineScript: |
+    #       $StorageAccountName = 'pbi-rest-api'
+    #       $StorageAccountKey = az storage account keys list --account-name $StorageAccountName --query '[0].value' -o tsv
+    #       Write-Host "##vso[task.setvariable variable=StorageAccountKey]$StorageAccountKey"
+
+    - task: AzureFileCopy@5
+      condition: and(succeeded(), ne('${{ parameters.OutputJsonPath }}',''))
+      displayName: 'Copy JSON Refresh History to Azure Blob Storage'
+      name: CopyJsonRefreshHistory
       inputs:
-        workingDirectory: '$(System.DefaultWorkingDirectory)'
-        pwsh: true
-        targetType: inline
-        script: |
-          Get-ChildItem -Recurse -Path '$(Pipeline.Workspace)/refresh-history/*' -Include '*.json', '*.csv' -Name
+        SourcePath: '$(Pipeline.Workspace)/refresh-history/${{ parameters.OutputJsonPath }}'
+        azureSubscription: $(ServiceConnection)
+        Destination: AzureBlob
+        storage: $(StorageAccount)
+        ContainerName: $(StorageContainer)
+        BlobPrefix: ''
+
+    - task: AzureFileCopy@5
+      condition: and(succeeded(), ne('${{ parameters.OutputCsvPath }}',''))
+      displayName: 'Copy CSV Refresh History to Azure Blob Storage'
+      name: CopyCsvRefreshHistory
+      inputs:
+        SourcePath: '$(Pipeline.Workspace)/refresh-history/${{ parameters.OutputCsvPath }}'
+        azureSubscription: $(ServiceConnection)
+        Destination: AzureBlob
+        storage: $(StorageAccount)
+        ContainerName: $(StorageContainer)
+        BlobPrefix: ''
+  
 
   # - task: AzureFileCopy@5
   #   displayName: 'Copy Refresh History to Azure Blob Storage'
