@@ -143,6 +143,7 @@ stages:
         targetType: inline
         script: |
           Get-ChildItem -Recurse -Path '$(Pipeline.Workspace)'
+          cat 'refresh-history/${{ parameters.OutputJsonPath }}'
 
   # - task: AzureFileCopy@5
   #   displayName: 'Copy Refresh History to Azure Blob Storage'
