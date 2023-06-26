@@ -129,7 +129,7 @@ stages:
         pwsh: true
         targetType: inline
         script: |
-          Get-ChildItem
+          Get-ChildItem -Path .
 
   # - task: AzureFileCopy@5
   #   displayName: 'Copy Refresh History to Azure Blob Storage'
