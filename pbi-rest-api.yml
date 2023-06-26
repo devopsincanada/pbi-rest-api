@@ -142,7 +142,7 @@ stages:
         pwsh: true
         targetType: inline
         script: |
-          Get-ChildItem -Recurse -Path '$(Pipeline.Workspace)/refresh-history/*' -Include '*.json', '*.csv'
+          Get-ChildItem -Recurse -Path '$(Pipeline.Workspace)/refresh-history/*' -Include '*.json', '*.csv' -Name
 
   # - task: AzureFileCopy@5
   #   displayName: 'Copy Refresh History to Azure Blob Storage'
