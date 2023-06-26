@@ -99,14 +99,18 @@ stages:
 
           Get-ChildItem -Path .
 
-    - task: PublishPipelineArtifact@1
+    # - task: PublishPipelineArtifact@1
+    #   condition: and(succeeded(), and(gt(variables.RefreshCount, 0), or(ne('${{ parameters.OutputJsonPath }}',''), ne('${{ parameters.OutputCsvPath }}',''))))
+    #   displayName: 'Publish pipeline workspace to Azure Pipelines artifact'
+    #   name: PublishRefreshHistory
+    #   inputs:
+    #     artifactName: 'refresh-history'
+    #     targetPath: $(System.DefaultWorkingDirectory)
+    #     publishLocation: 'pipeline'
+
+    - publish: $(System.DefaultWorkingDirectory)
       condition: and(succeeded(), and(gt(variables.RefreshCount, 0), or(ne('${{ parameters.OutputJsonPath }}',''), ne('${{ parameters.OutputCsvPath }}',''))))
-      displayName: 'Publish pipeline workspace to Azure Pipelines artifact'
-      name: PublishRefreshHistory
-      inputs:
-        artifactName: 'refresh-history'
-        targetPath: $(System.DefaultWorkingDirectory)
-        publishLocation: 'pipeline'
+      artifact: refresh-history
 
   - job: PublishRefreshHistoryJob
     dependsOn: GetRefreshHistoryJob
@@ -114,17 +118,23 @@ stages:
 
     steps:
 
-    - task: DownloadPipelineArtifact@2
-      displayName: 'Download Refresh History'
-      name: DownloadRefreshHistory
-      inputs:
-        buildType: 'current'
-        artifactName: 'refresh-history'
-        targetPath: '$(System.DefaultWorkingDirectory)'
-        itemPattern: |
-          **/*.json
-          **/*.csv
-        # itemPattern: '**/*.(json|csv)'
+    # - task: DownloadPipelineArtifact@2
+    #   displayName: 'Download Refresh History'
+    #   name: DownloadRefreshHistory
+    #   inputs:
+    #     buildType: 'current'
+    #     artifactName: 'refresh-history'
+    #     targetPath: '$(System.DefaultWorkingDirectory)'
+    #     itemPattern: |
+    #       **/*.json
+    #       **/*.csv
+    #     # itemPattern: '**/*.(json|csv)'
+
+    - download: current
+      artifact: refresh-history
+      patterns: |
+        **/*.json
+        **/*.csv
 
     - task: PowerShell@2
       inputs:
@@ -132,7 +142,7 @@ stages:
         pwsh: true
         targetType: inline
         script: |
-          Get-ChildItem -Path .
+          Get-ChildItem -Recurse -Path '$(Pipeline.Workspace)'
 
   # - task: AzureFileCopy@5
   #   displayName: 'Copy Refresh History to Azure Blob Storage'
