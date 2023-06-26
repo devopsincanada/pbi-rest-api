@@ -8,7 +8,7 @@ parameters:
   - name: vmImage
     type: string
     displayName: VM Image
-    default: 'ubuntu-latest'
+    default: 'windows-latest'
     values:
       - 'ubuntu-latest'
       - 'windows-latest'
@@ -113,7 +113,7 @@ stages:
         **/*.json
         **/*.csv
 
-    - task: AzureFileCopy@5
+    - task: AzureFileCopy@5 # Requires Windows agent. Use AzureCLI task for any agent type.
       condition: and(succeeded(), ne('${{ parameters.OutputJsonPath }}',''))
       displayName: 'Copy JSON Refresh History to Azure Blob Storage'
       name: CopyJsonRefreshHistory
@@ -125,7 +125,7 @@ stages:
         ContainerName: $(StorageContainer)
         BlobPrefix: ''
 
-    - task: AzureFileCopy@5
+    - task: AzureFileCopy@5 # Requires Windows agent. Use AzureCLI task for any agent type.
       condition: and(succeeded(), ne('${{ parameters.OutputCsvPath }}',''))
       displayName: 'Copy CSV Refresh History to Azure Blob Storage'
       name: CopyCsvRefreshHistory
