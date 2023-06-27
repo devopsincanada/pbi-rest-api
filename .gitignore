@@ -2,3 +2,5 @@
 /variants
 *.json
 *.csv
+*.txt
+*.pdf
