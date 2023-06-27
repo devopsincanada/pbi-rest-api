@@ -1,9 +1,16 @@
+# ----------------------------------------------------------------------------------
+#  Copyright (c) Microsoft Corporation.
+#  Licensed under the MIT license.
+#  THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, 
+#  EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
+#  OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE.
+# ----------------------------------------------------------------------------------
+
 # Power BI REST API pipeline.
 # Extracts refresh history for all datasets in all Power BI workspaces
 # and saves to a CSV/JSON file in Azure Blob Storage.
 # https://aka.ms/yaml
 
-# All parameters have default values and can be overridden in the pipeline
 parameters:
   - name: vmImage
     type: string
