@@ -1,9 +1,8 @@
 
 # TEST VALUES / pbispapp with no permissions
-$TenantId = "45022e30-ae24-477e-9551-367579e9c8ae"
-$AppId = "4bcb07c1-2a75-4fe2-b1c3-8d48b88a86d9"
-$AppSecret = ConvertTo-SecureString "zPL8Q~nVc6br.NyCkur-2FypOfyc53iX4oFWxcO4" -AsPlainText -Force
-
+$TenantId = [System.Environment]::GetEnvironmentVariable("PBI_TENANT_ID")
+$AppId = [System.Environment]::GetEnvironmentVariable("PBI_APP_ID")
+$AppSecret = (ConvertTo-SecureString -String ([System.Environment]::GetEnvironmentVariable("PBI_APP_SECRET")) -AsPlainText -Force)
 
 $RefreshHistory = @()
 ./Get-RefreshHistory.ps1 `
@@ -19,4 +18,4 @@ $RefreshHistory = @()
   -EndDate "2200-01-01" `
   -RefreshHistory ([ref]$RefreshHistory)
 
-$i = 0
+Write-Output "Refresh history count: $($RefreshHistory.Count)"
