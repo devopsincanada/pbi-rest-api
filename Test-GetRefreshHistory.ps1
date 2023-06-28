@@ -1,3 +1,12 @@
+<#
+  ----------------------------------------------------------------------------------
+  Copyright (c) Microsoft Corporation.
+  Licensed under the MIT license.
+  THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, 
+  EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
+  OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE.
+  ----------------------------------------------------------------------------------
+#>
 
 # TEST VALUES / pbispapp with no permissions
 $TenantId = [System.Environment]::GetEnvironmentVariable("PBI_TENANT_ID")
